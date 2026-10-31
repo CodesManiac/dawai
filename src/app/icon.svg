@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="dawai" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8E05C2" />
+      <stop offset="1" stop-color="#6A68F6" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#dawai)" />
+  <path
+    d="M14 35v-6M22 42V22M30 38V26M38 47V17M46 35v-6"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="4.5"
+    stroke-linecap="round"
+  />
+</svg>

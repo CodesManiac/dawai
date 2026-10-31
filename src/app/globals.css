@@ -1,0 +1,253 @@
+@import "tailwindcss";
+
+/*
+ * Dawai design tokens
+ * ---------------------------------------------------------------------------
+ * The palette is intentionally dark-only and small. Raw hex values belong
+ * here; application code should use the semantic utilities generated below.
+ *
+ * Contrast notes (WCAG 2.1, measured):
+ *   #FFFFFF on #060D20  19.33:1
+ *   #CCDEF6 on #060D20  14.13:1
+ *   #FFFFFF on #8E05C2   7.12:1
+ *   #6A68F6 on #060D20   4.53:1
+ *   #8E05C2 on #060D20   2.72:1  → graphics/large surfaces only, never body text
+ */
+:root {
+  color-scheme: dark;
+
+  --background: #060d20;
+  --foreground: #ffffff;
+  --surface: #1b1b1b;
+  --surface-elevated: #2c394b;
+  --ai: #8e05c2;
+  --progress: #6a68f6;
+  --ink-muted: #ccdef6;
+
+  /* Derived from the palette: soft blue at 14% / 30% opacity. */
+  --border: #ccdef624;
+  --border-strong: #ccdef64d;
+  --ring: #6a68f6;
+
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-ai: var(--ai);
+  --color-progress: var(--progress);
+  --color-ink-muted: var(--ink-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ring: var(--ring);
+
+  /* shadcn/ui-compatible aliases for primitives added later. */
+  --color-card: var(--surface);
+  --color-card-foreground: var(--foreground);
+  --color-primary: var(--ai);
+  --color-primary-foreground: var(--foreground);
+  --color-secondary: var(--surface-elevated);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--surface-elevated);
+  --color-muted-foreground: var(--ink-muted);
+  --color-accent: var(--surface-elevated);
+  --color-accent-foreground: var(--foreground);
+  --color-input: var(--border-strong);
+
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), ui-serif, Georgia, Cambria, "Times New Roman", serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 12px);
+
+  --shadow-raised: 0 1px 0 0 rgb(255 255 255 / 0.04) inset, 0 28px 64px -36px rgb(0 0 0 / 0.85);
+  --shadow-ai: 0 20px 56px -28px rgb(142 5 194 / 0.7);
+  --shadow-progress: 0 20px 56px -28px rgb(106 104 246 / 0.6);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  ::selection {
+    background-color: var(--color-ai);
+    color: var(--color-foreground);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .skip-link {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 100;
+    transform: translateY(-200%);
+    border-radius: var(--radius-md);
+    background-color: var(--color-ai);
+    padding: 0.625rem 1rem;
+    color: var(--color-foreground);
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition: transform 150ms ease;
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+
+  .brand-mark {
+    background-image: linear-gradient(135deg, var(--color-ai), var(--color-progress));
+  }
+
+  .blueprint-grid {
+    background-image:
+      linear-gradient(to right, rgb(204 222 246 / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(204 222 246 / 0.05) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(70% 60% at 50% 0%, black 10%, transparent 80%);
+    mask-image: radial-gradient(70% 60% at 50% 0%, black 10%, transparent 80%);
+  }
+
+  .hero-glow {
+    background:
+      radial-gradient(45% 55% at 18% 8%, rgb(142 5 194 / 0.22), transparent 70%),
+      radial-gradient(40% 45% at 82% 16%, rgb(106 104 246 / 0.16), transparent 72%);
+  }
+
+  /*
+   * Long-form learning content. Montserrat stays in the product chrome;
+   * Source Serif 4 carries the reading experience.
+   */
+  .learning-content {
+    max-width: 68ch;
+    color: var(--color-ink-muted);
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    line-height: 1.85;
+  }
+
+  .learning-content > * + * {
+    margin-block-start: 1.25em;
+  }
+
+  .learning-content h2,
+  .learning-content h3 {
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  .learning-content h2 {
+    margin-block-start: 2em;
+    font-size: 1.5rem;
+  }
+
+  .learning-content h3 {
+    margin-block-start: 1.75em;
+    font-size: 1.1875rem;
+  }
+
+  .learning-content strong {
+    color: var(--color-foreground);
+    font-weight: 600;
+  }
+
+  .learning-content a {
+    color: var(--color-foreground);
+    text-decoration: underline;
+    text-decoration-color: var(--color-progress);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
+  .learning-content a:hover {
+    text-decoration-color: var(--color-foreground);
+  }
+
+  .learning-content ul,
+  .learning-content ol {
+    padding-inline-start: 1.25rem;
+  }
+
+  .learning-content li {
+    padding-inline-start: 0.25rem;
+  }
+
+  .learning-content li + li {
+    margin-block-start: 0.5em;
+  }
+
+  .learning-content ul > li::marker {
+    color: var(--color-progress);
+  }
+
+  .learning-content ol > li::marker {
+    color: var(--color-progress);
+    font-family: var(--font-sans);
+    font-weight: 700;
+  }
+
+  .learning-content blockquote {
+    border-inline-start: 2px solid var(--color-progress);
+    padding-inline-start: 1.25rem;
+    color: var(--color-foreground);
+    font-style: italic;
+  }
+
+  .learning-content code {
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface-elevated);
+    padding: 0.15em 0.4em;
+    color: var(--color-foreground);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.875em;
+  }
+
+  .learning-callout {
+    border: 1px solid var(--color-border);
+    border-inline-start: 2px solid var(--color-ai);
+    border-radius: var(--radius-md);
+    background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+    padding: 1rem 1.25rem;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+}
