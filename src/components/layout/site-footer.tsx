@@ -14,11 +14,10 @@ function SiteFooter() {
 
         <div className="flex flex-col gap-3 md:items-end md:text-right">
           <p className="text-[0.6875rem] font-bold tracking-[0.16em] text-ink-muted/70 uppercase">
-            Foundation · Task 001
+            Auth foundation · Task 002
           </p>
           <p className="max-w-xs text-xs leading-relaxed text-ink-muted/80">
-            Product features are intentionally deferred. Architecture rules and the roadmap are
-            documented in the repository.
+            Accounts are real. Learning features remain intentionally deferred to later tasks.
           </p>
           <nav aria-label="Footer" className="flex items-center gap-4">
             {siteConfig.nav.map((item) => (

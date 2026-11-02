@@ -40,6 +40,7 @@ const principles = [
 ] as const;
 
 const ready = [
+  "Email/password auth with server-validated sessions",
   "Next.js App Router shell with strict TypeScript",
   "Semantic design tokens and accessible UI primitives",
   "Montserrat UI with Source Serif 4 for learning content",
@@ -49,7 +50,7 @@ const ready = [
 ] as const;
 
 const deferred = [
-  "Authentication and database schema (Supabase)",
+  "Study packs and the learning database schema",
   "AI provider adapter and live model calls",
   "Document upload, parsing, embeddings, and retrieval",
   "Audio lessons, quizzes, tutoring, and TTS",
@@ -72,7 +73,7 @@ export default function HomePage() {
           <div>
             <Badge variant="outline" className="border-progress/40 bg-progress/10">
               <span className="size-1.5 rounded-full bg-progress" aria-hidden="true" />
-              Foundation · Task 001
+              Auth foundation · Task 002
             </Badge>
 
             <h1 className="mt-6 max-w-2xl text-4xl leading-[1.02] font-extrabold tracking-[-0.045em] text-balance sm:text-5xl lg:text-6xl">
@@ -147,7 +148,7 @@ export default function HomePage() {
           </div>
 
           <p className="mt-5 text-xs text-ink-muted/70">
-            Planned capabilities. None of these product features are implemented in Task 001.
+            Accounts and sessions are implemented. The learning features above remain planned.
           </p>
         </div>
       </section>
@@ -184,7 +185,7 @@ export default function HomePage() {
             </ul>
 
             <p className="mt-8 text-xs leading-relaxed text-ink-muted/70">
-              Task 001 defines contracts only. Implementations arrive in approved feature tasks.
+              Auth is implemented. The AI and document modules are still contracts only.
             </p>
           </div>
 
@@ -196,14 +197,14 @@ export default function HomePage() {
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
             <p className="text-[0.6875rem] font-bold tracking-[0.16em] text-progress uppercase">
-              Task 001 status
+              Task 002 status
             </p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">
-              A foundation, not a demo.
+              Authentication is in place. The product isn&rsquo;t.
             </h2>
             <p className="mt-4 text-base leading-relaxed text-ink-muted">
-              The shell, tokens, quality gates, and written boundaries are in place. Product logic
-              is deliberately absent until the next task is approved.
+              You can create an account, sign in, recover a password, and hold a server-validated
+              session. Study packs, sources, AI, and audio are deliberately absent.
             </p>
           </div>
 
@@ -253,16 +254,16 @@ export default function HomePage() {
                   Review first
                 </p>
                 <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.03em]">
-                  Task 002 starts only after approval.
+                  Task 003 starts only after approval.
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted">
-                  Review the tokens and conventions, then decide the next slice. Auth, schema, and
-                  AI integration remain out of scope until then.
+                  Authentication is reviewable now. Study packs, ingestion, and AI remain out of
+                  scope until the next task is approved.
                 </p>
               </div>
               <Button asChild variant="secondary" className="shrink-0">
-                <Link href="/design-system">
-                  Review the design system
+                <Link href="/sign-up">
+                  Create an account
                   <ArrowRight aria-hidden="true" />
                 </Link>
               </Button>

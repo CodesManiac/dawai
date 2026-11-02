@@ -12,6 +12,7 @@
  *   #FFFFFF on #8E05C2   7.12:1
  *   #6A68F6 on #060D20   4.53:1
  *   #8E05C2 on #060D20   2.72:1  → graphics/large surfaces only, never body text
+ *   #FFB4B4 on #1B1B1B  10.20:1  (error text)
  */
 :root {
   color-scheme: dark;
@@ -23,6 +24,7 @@
   --ai: #8e05c2;
   --progress: #6a68f6;
   --ink-muted: #ccdef6;
+  --danger: #ffb4b4;
 
   /* Derived from the palette: soft blue at 14% / 30% opacity. */
   --border: #ccdef624;
@@ -40,6 +42,7 @@
   --color-ai: var(--ai);
   --color-progress: var(--progress);
   --color-ink-muted: var(--ink-muted);
+  --color-danger: var(--danger);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-ring: var(--ring);
