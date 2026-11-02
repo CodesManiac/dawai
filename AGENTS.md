@@ -10,20 +10,21 @@ Dawai is an AI-powered learning companion for documents, webpages, and education
 target experience is source-grounded explanation, audio lessons, interactive tutoring, quizzes, and
 personalized feedback.
 
-**Current state: Task 001 — Project Foundation only.** The repository contains a working Next.js
-shell, design tokens, shared primitives, contracts, tests, and documentation.
+**Current state: Task 002 — Authentication foundation.** Email/password accounts, server-validated
+sessions, a protected dashboard, email confirmation, password recovery/reset, and authenticated
+password change are implemented with Supabase Auth. The repository also contains the Task 001 shell,
+design tokens, shared primitives, contracts, tests, and documentation.
 
 Not implemented, and **not to be added without explicit approval**:
 
-- Authentication or session flows
-- Database tables, migrations, or Supabase clients
+- Application database tables, migrations, profiles, or RLS policies
 - Live AI provider calls or prompt/agent pipelines
 - Document upload, parsing, embeddings, retrieval, or `pgvector`
 - Quizzes, TTS/audio generation, tutoring, or analytics
 - CI workflows or deployment configuration
 
-Task 002+ starts only after the foundation is reviewed and approved. Do not “helpfully” implement
-the next task in advance.
+Task 003 starts only after Task 002 is reviewed and approved. Do not “helpfully” implement the next
+task in advance.
 
 ## Commands
 
@@ -42,9 +43,10 @@ the next task in advance.
 | `npm run test:e2e`      | Playwright; starts the dev server automatically. |
 | `npm run check`         | Format check, lint, typecheck, unit tests.       |
 
-On macOS 13, Playwright 1.64 cannot download bundled Chromium. Use
-`PLAYWRIGHT_CHANNEL=chrome npm run test:e2e` with Google Chrome installed. Do not commit a
-machine-specific browser path.
+On macOS 13, Playwright 1.64 cannot download its current bundled Chromium. Use a previously cached
+Playwright Chromium or a working Chrome installation via `PLAYWRIGHT_CHANNEL=chrome npm run test:e2e`.
+Chrome 156 aborted headless launches on the verification host, so record which browser actually ran.
+Do not commit a machine-specific browser path.
 
 ## Architecture map
 
@@ -56,9 +58,12 @@ src/app (routes, layouts, route handlers)
    │          └──► src/server (cross-feature server capabilities)
    │                   ├── ai/
    │                   ├── documents/
-   │                   └── db/
+   │                   ├── db/
+   │                   └── supabase/
    │
    └──► src/components/{ui,layout,brand} + src/lib (pure shared code)
+
+src/proxy.ts (session refresh + coarse route protection) ──► src/lib + src/server/supabase
 ```
 
 ### Allowed dependency directions
@@ -70,6 +75,7 @@ src/app (routes, layouts, route handlers)
 | `src/components/*` | lib, other shared components       | `src/server`, `src/features`, `src/app`      |
 | `src/lib`          | other pure lib modules             | React UI with side effects, server, features |
 | `src/server/*`     | lib, other server modules          | React, `src/app`, components, features       |
+| `src/proxy.ts`     | lib, server                        | React, `src/app`, components, features       |
 
 ESLint enforces these directions where practical. If you find a boundary that ESLint cannot express,
 document it and enforce it in review. Do not weaken a rule to make an import compile.
@@ -80,7 +86,10 @@ document it and enforce it in review. Do not weaken a rule to make an import com
   then render a feature or shared component. Route handlers belong here and delegate to server
   modules.
 - **`src/features`** — one user capability end to end. It owns its UI, schemas, server actions, and
-  domain types. Expose a small `index.ts`; no deep imports across features.
+  domain types. Expose a small `index.ts`; no deep imports across features. `src/features/auth` is
+  the reference implementation.
+- **`src/server/supabase`** — cookie-bound Supabase clients and proxy session refresh. Never import
+  React or expose the service-role key. Create a client per request; never cache one in module scope.
 - **`src/server/ai`** — provider contracts and (later) vendor adapters. Features depend on
   `AiProvider`, never directly on a model SDK.
 - **`src/server/documents`** — extraction, chunking, citation locators, and future ingestion
@@ -91,11 +100,14 @@ document it and enforce it in review. Do not weaken a rule to make an import com
   than one feature shares the same semantics.
 - **`src/lib`** — pure utilities, environment access, and static config. No React, no network, no
   database.
+- **`src/proxy.ts`** — refreshes sessions and performs coarse redirects. It is an optimistic gate;
+  layouts and pages must re-check identity on the server.
 
 ## Non-negotiable rules
 
 1. **Do not fabricate functionality.** Never claim auth, persistence, AI, uploads, or retrieval
-   work unless it is implemented and tested. Label concepts and specimens clearly.
+   work unless it is implemented and tested. Label concepts, mocks, and unverified live paths
+   clearly.
 2. **Do not hardcode secrets.** No API keys, tokens, service-role keys, or credentials in source,
    tests, fixtures, screenshots, or docs. Use `.env.local` and `.env.example` placeholders.
 3. **Do not use `NEXT_PUBLIC_*` for secrets.** Anything public is shipped to the browser.
@@ -105,7 +117,8 @@ document it and enforce it in review. Do not weaken a rule to make an import com
    palette values require design approval and contrast checks.
 6. **Do not bypass the layer boundaries.** No Supabase/AI SDK calls in components. No data fetching
    in UI primitives. No route imports from features.
-7. **Keep the scope of the current task.** No opportunistic auth, schema, RAG, or provider work.
+7. **Keep the scope of the current task.** No opportunistic schema, RAG, provider, or additional
+   auth-provider work.
 8. **TypeScript is strict.** Avoid `any`; use `unknown` plus validation or a narrow type. Prefer
    `satisfies` for object literals whose shape should be checked without widening.
 9. **Server by default.** Add `"use client"` only to the leaf component that needs state, effects,
@@ -122,8 +135,9 @@ document it and enforce it in review. Do not weaken a rule to make an import com
   exports.
 - Use `import type` for type-only imports (enforced by ESLint).
 - Prefer `type` aliases for props; use interfaces for extendable contracts.
-- Use Server Actions for mutations once auth exists. Do not create REST endpoints just to call them
-  from the same app. Use route handlers for webhooks, uploads, streaming, and third-party callbacks.
+- Use Server Actions for mutations. Do not create REST endpoints just to call them from the same
+  app. Use route handlers for webhooks, uploads, streaming, third-party callbacks, and auth
+  callbacks.
 - Validate all external input at the boundary (request body, search params, form data, env). Add
   `zod` with the first real validation need; do not hand-roll complex validators.
 - Return serializable data from server components/actions. Never pass class instances or clients to
@@ -145,7 +159,7 @@ document it and enforce it in review. Do not weaken a rule to make an import com
 - Use `cn()` from `src/lib/utils.ts` for conditional/conflicting classes.
 - Use `cva` for variant-rich primitives; keep variant names semantic, not visual.
 - Do not add a `tailwind.config.ts`; Tailwind 4 is configured in CSS with `@theme inline`.
-- Dark is the only theme in Task 001. Do not add a theme toggle or a light palette without design
+- Dark is the only theme in Task 002. Do not add a theme toggle or a light palette without design
   approval.
 - Use `font-sans` for product chrome and `.learning-content` / `font-serif` for long-form learning
   material.
@@ -165,17 +179,46 @@ document it and enforce it in review. Do not weaken a rule to make an import com
 - Keep the skip link, focus outline, and reduced-motion behavior intact.
 - New interactive components require keyboard testing and an accessible name.
 
+### Auth and sessions
+
+- Authentication is server-authoritative. Resolve identity with `getCurrentUser()` or
+  `requireUser()`; never accept a user ID, email, or role from a form or client component.
+- Use `createSupabaseServerClient()` per request. Never cache a client in module scope or pass one to
+  the browser. Session refresh belongs in `src/proxy.ts`; protected layouts must still re-check.
+- Only publishable/legacy anon keys may be public. Reject `sb_secret_*` and `service_role` values in
+  `NEXT_PUBLIC_*`. Do not add a service-role client without an approved, narrowly scoped need.
+- Auth mutations go through Server Actions in `src/features/auth/server`. Validate input with zod
+  and map provider error codes; never forward raw Supabase error messages or log credentials.
+- Sanitize every post-auth destination with `sanitizeRedirectPath()`. Reject absolute URLs,
+  protocol-relative URLs, backslashes, dot-segment normalization, encoded path separators, control
+  characters, and auth screens.
+- Keep Supabase imports out of presentation components. UI may import auth actions and client-safe
+  components only.
+- Recovery and resend responses must stay generic so they do not reveal whether an account exists.
+- Password reset is recovery-only. Authorize it with `getRecoveryAuthorization()`: Supabase's signed
+  JWT `amr` claim must contain a `recovery` entry with a timestamp no older than 60 minutes. Never
+  trust a client flag, hidden field, or ordinary authenticated session for reset authorization.
+- Authenticated password change is a separate flow. Require the current password before setting a
+  new one; do not reuse the recovery reset action for signed-in users.
+- A completed reset revokes every session, including the recovery session, and returns to sign-in.
+  An authenticated password change revokes other sessions. Report partial revocation honestly.
+- If a sign-out revocation call fails, clear local auth cookies with `clearSupabaseAuthCookies()` so
+  stale cookies cannot keep rendering protected pages. Show a partial-result notice; do not claim
+  every session was revoked.
+- PKCE email links are browser-bound. Copy must tell users to open the link in the same browser.
+
 ### Server, AI, and data
 
 - AI access goes through `AiProvider` (`src/server/ai/provider.ts`). Adapters may import vendor SDKs;
   features must not.
 - Persist source provenance (page, timestamp, URL) with extracted segments so citations survive
   retrieval.
-- Keep the service-role Supabase key server-only. Prefer the anon key plus RLS for user-scoped
-  queries.
+- Keep the service-role Supabase key server-only. Prefer the publishable/anon key plus RLS for
+  user-scoped queries.
 - Enable RLS on every user-owned table before exposing it. Migrations live in `supabase/migrations/`
   when approved.
-- Do not log prompts, source text, or user content by default. Redact secrets and personal data.
+- Do not log prompts, source text, auth tokens, or user content by default. Redact secrets and
+  personal data.
 - Add timeouts/cancellation and bounded retries to external calls. Fail visibly rather than silently
   returning fabricated content.
 
@@ -184,9 +227,13 @@ document it and enforce it in review. Do not weaken a rule to make an import com
 - Test behavior, not implementation details. Avoid snapshot tests for UI.
 - Unit-test pure logic and component contracts (variants, accessible names, state).
 - Add Playwright coverage for each primary user flow and for regressions that unit tests cannot catch.
+  Auth E2E must cover protected-route redirects, unsafe `next` values, live failure paths, and small
+  viewports (320 px and up).
 - Test failure paths where the product can fail: empty sources, invalid input, provider errors,
   insufficient permissions.
-- Do not mock the thing under test. Mock network boundaries with realistic fixtures.
+- Do not mock the thing under test. Mock network boundaries with realistic fixtures. Automated tests
+  must not create real users or send real confirmation/recovery email; verify those paths manually
+  with a designated test account and record what remains unverified.
 - No coverage threshold exists yet. When domain logic lands, add thresholds and enforce them in CI.
 - A test that only renders a component without asserting meaningful behavior is not sufficient
   coverage for a new feature.
@@ -216,11 +263,12 @@ A change is complete only when:
 
 ## Roadmap (requires approval)
 
-1. **Task 002:** Supabase auth and initial schema with RLS, repository contracts, integration tests.
-2. **Task 003:** AI provider adapter behind `AiProvider`, deterministic test double, usage/cost
+1. **Task 003:** Profiles and the initial learning schema with RLS, repository contracts, and
+   integration tests against a disposable Supabase instance.
+2. **Task 004:** AI provider adapter behind `AiProvider`, deterministic test double, usage/cost
    boundaries.
-3. **Task 004:** Document ingestion with source locators, chunking, and embeddings.
-4. **Task 005:** Retrieval, grounded tutoring, quizzes, and feedback.
+3. **Task 005:** Document ingestion with source locators, chunking, and embeddings.
+4. **Task 006:** Retrieval, grounded tutoring, quizzes, and feedback.
 5. **Later:** Audio lessons/TTS, progress model, CI, automated accessibility checks, deployment.
 
 Stop after the approved task and report for review. Do not proceed to the next task automatically.

@@ -8,8 +8,8 @@ test.describe("foundation site", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
       "Turn any source into understanding.",
     );
-    await expect(page.getByText("Foundation · Task 001").first()).toBeVisible();
-    await expect(page.getByText(/No product features are live/i)).toBeVisible();
+    await expect(page.getByText("Auth foundation · Task 002").first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Authentication is in place/ })).toBeVisible();
   });
 
   test("primary navigation reaches the design system", async ({ page }) => {

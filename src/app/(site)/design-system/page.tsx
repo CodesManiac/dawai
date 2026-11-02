@@ -67,6 +67,13 @@ const palette = [
     use: "Body copy and descriptions",
   },
   {
+    name: "Danger",
+    hex: "#FFB4B4",
+    token: "--danger",
+    utility: "text-danger",
+    use: "Form errors and destructive notices",
+  },
+  {
     name: "Primary text",
     hex: "#FFFFFF",
     token: "--foreground",
@@ -111,6 +118,7 @@ const typeScale = [
 const contrastPairs = [
   { pair: "White on canvas", ratio: "19.33:1", tier: "AAA", use: "Headings, primary text" },
   { pair: "Soft blue on canvas", ratio: "14.13:1", tier: "AAA", use: "Body copy" },
+  { pair: "Danger on surface", ratio: "10.20:1", tier: "AAA", use: "Error messages" },
   { pair: "White on AI purple", ratio: "7.12:1", tier: "AAA", use: "Primary buttons" },
   { pair: "Progress blue on canvas", ratio: "4.53:1", tier: "AA", use: "Labels, indicators" },
   {

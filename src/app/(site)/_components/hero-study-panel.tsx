@@ -11,7 +11,7 @@ const followUps = [
 
 /**
  * Illustrative product preview. Everything here is static by design; the
- * caption makes clear that no feature is functional in Task 001.
+ * caption makes clear that no learning feature is functional yet.
  */
 function HeroStudyPanel() {
   return (
@@ -101,7 +101,7 @@ function HeroStudyPanel() {
       </div>
 
       <figcaption className="mt-3 text-center text-xs text-ink-muted/70">
-        Interface concept. No product features are live in Task 001.
+        Interface concept. Learning features are not live yet.
       </figcaption>
     </figure>
   );

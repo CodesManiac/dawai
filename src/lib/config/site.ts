@@ -6,6 +6,7 @@ export const siteConfig = {
   nav: [
     { href: "/", label: "Overview" },
     { href: "/design-system", label: "Design system" },
+    { href: "/sign-in", label: "Sign in" },
   ],
 } as const;
 
