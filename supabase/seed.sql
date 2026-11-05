@@ -1,0 +1,2 @@
+-- Task 003 does not seed application data.
+-- The pgTAP suite creates its own disposable fixtures inside a transaction.

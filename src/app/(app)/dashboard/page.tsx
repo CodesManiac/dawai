@@ -82,8 +82,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             Welcome back, {displayNameFor(fullName, user.email)}.
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-muted">
-            Your account is live. Authentication is the only product capability in this task — the
-            learning workspace comes later.
+            Your account is live. Authentication and the learning database foundation are in place;
+            the learning workspace comes later.
           </p>
 
           <div className="mt-6 max-w-xl space-y-3">

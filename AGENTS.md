@@ -10,38 +10,52 @@ Dawai is an AI-powered learning companion for documents, webpages, and education
 target experience is source-grounded explanation, audio lessons, interactive tutoring, quizzes, and
 personalized feedback.
 
-**Current state: Task 002 — Authentication foundation.** Email/password accounts, server-validated
-sessions, a protected dashboard, email confirmation, password recovery/reset, and authenticated
-password change are implemented with Supabase Auth. The repository also contains the Task 001 shell,
-design tokens, shared primitives, contracts, tests, and documentation.
+**Current state: Task 003 — Learning database foundation.** Task 002 authentication remains the
+merged baseline: email/password accounts, server-validated sessions, a protected dashboard, email
+confirmation, password recovery/reset, and authenticated password change with Supabase Auth.
+Task 003 adds versioned Supabase migrations for `profiles`, `courses`, study packs, and sources,
+database-enforced ownership with RLS and column-level grants, same-owner composite foreign keys,
+profile provisioning on signup, typed repositories in `src/server/db`, and pgTAP integration tests.
+The repository also contains the Task 001 shell, design tokens, shared primitives, contracts, tests,
+and documentation.
 
 Not implemented, and **not to be added without explicit approval**:
 
-- Application database tables, migrations, profiles, or RLS policies
+- Study pack/product CRUD screens or a learning UI
 - Live AI provider calls or prompt/agent pipelines
-- Document upload, parsing, embeddings, retrieval, or `pgvector`
+- Document upload, parsing, chunking, embeddings, retrieval, or `pgvector`
 - Quizzes, TTS/audio generation, tutoring, or analytics
 - CI workflows or deployment configuration
 
-Task 003 starts only after Task 002 is reviewed and approved. Do not “helpfully” implement the next
+Task 004 starts only after Task 003 is reviewed and approved. Do not “helpfully” implement the next
 task in advance.
 
 ## Commands
 
-| Command                 | Purpose                                          |
-| ----------------------- | ------------------------------------------------ |
-| `npm run dev`           | Development server on `http://localhost:3000`.   |
-| `npm run build`         | Production build.                                |
-| `npm run start`         | Serve the production build.                      |
-| `npm run lint`          | ESLint, including import-boundary rules.         |
-| `npm run format`        | Prettier with Tailwind class sorting.            |
-| `npm run format:check`  | Formatting verification.                         |
-| `npm run typecheck`     | `tsc --noEmit`.                                  |
-| `npm run test`          | Vitest once.                                     |
-| `npm run test:watch`    | Vitest watch mode.                               |
-| `npm run test:coverage` | Vitest with V8 coverage.                         |
-| `npm run test:e2e`      | Playwright; starts the dev server automatically. |
-| `npm run check`         | Format check, lint, typecheck, unit tests.       |
+| Command                         | Purpose                                            |
+| ------------------------------- | -------------------------------------------------- |
+| `npm run dev`                   | Development server on `http://localhost:3000`.     |
+| `npm run build`                 | Production build.                                  |
+| `npm run start`                 | Serve the production build.                        |
+| `npm run lint`                  | ESLint, including import-boundary rules.           |
+| `npm run format`                | Prettier with Tailwind class sorting.              |
+| `npm run format:check`          | Formatting verification.                           |
+| `npm run typecheck`             | `tsc --noEmit`.                                    |
+| `npm run test`                  | Vitest once.                                       |
+| `npm run test:watch`            | Vitest watch mode.                                 |
+| `npm run test:coverage`         | Vitest with V8 coverage.                           |
+| `npm run test:e2e`              | Playwright; starts the dev server automatically.   |
+| `npm run check`                 | Format check, lint, typecheck, unit tests.         |
+| `npx supabase start`            | Start the local Supabase stack (requires Docker).  |
+| `npx supabase db reset`         | Reset the **local** database and apply migrations. |
+| `npx supabase db push --remote` | Apply reviewed migrations to the linked project.   |
+| `npx supabase test db`          | Run pgTAP database tests locally.                  |
+
+Supabase CLI commands are optional tooling, not npm dependencies. `npx supabase db push` changes the
+linked hosted project: use it only after review and only with the approved Dawai project. Never run
+`supabase db reset --linked`, `supabase db reset --db-url`, or any other destructive command against
+the hosted project. If the CLI, Docker, or credentials are unavailable, do not claim the database was
+applied or that RLS was verified live.
 
 On macOS 13, Playwright 1.64 cannot download its current bundled Chromium. Use a previously cached
 Playwright Chromium or a working Chrome installation via `PLAYWRIGHT_CHANNEL=chrome npm run test:e2e`.
@@ -64,6 +78,9 @@ src/app (routes, layouts, route handlers)
    └──► src/components/{ui,layout,brand} + src/lib (pure shared code)
 
 src/proxy.ts (session refresh + coarse route protection) ──► src/lib + src/server/supabase
+
+supabase/migrations (versioned schema/RLS) ──► local or approved hosted Postgres
+supabase/tests (pgTAP behavior tests)       ──► disposable/local Postgres
 ```
 
 ### Allowed dependency directions
@@ -94,8 +111,13 @@ document it and enforce it in review. Do not weaken a rule to make an import com
   `AiProvider`, never directly on a model SDK.
 - **`src/server/documents`** — extraction, chunking, citation locators, and future ingestion
   orchestration. Keep page/timestamp provenance with every segment.
-- **`src/server/db`** — repositories and schema-derived types. No UI imports, no service-role use
-  outside trusted server paths.
+- **`src/server/db`** — repository contracts, zod input schemas, row-to-domain mapping, and
+  Supabase-backed implementations. Accept a request-scoped client; never accept a user ID from a
+  caller; never use a service-role client. SQL migrations and RLS policies live in
+  `supabase/migrations/`.
+- **`supabase/`** — versioned SQL migrations and pgTAP integration tests. The migrations are the
+  schema source of truth; review them before applying and never run a destructive reset against the
+  hosted project.
 - **`src/components/ui`** — feature-agnostic primitives. Promote a component here only when more
   than one feature shares the same semantics.
 - **`src/lib`** — pure utilities, environment access, and static config. No React, no network, no
@@ -159,8 +181,7 @@ document it and enforce it in review. Do not weaken a rule to make an import com
 - Use `cn()` from `src/lib/utils.ts` for conditional/conflicting classes.
 - Use `cva` for variant-rich primitives; keep variant names semantic, not visual.
 - Do not add a `tailwind.config.ts`; Tailwind 4 is configured in CSS with `@theme inline`.
-- Dark is the only theme in Task 002. Do not add a theme toggle or a light palette without design
-  approval.
+- Dark is the only theme. Do not add a theme toggle or a light palette without design approval.
 - Use `font-sans` for product chrome and `.learning-content` / `font-serif` for long-form learning
   material.
 - Avoid arbitrary values when a token exists. If a one-off is necessary, keep it local and explain
@@ -207,6 +228,29 @@ document it and enforce it in review. Do not weaken a rule to make an import com
   every session was revoked.
 - PKCE email links are browser-bound. Copy must tell users to open the link in the same browser.
 
+### Learning data and repositories
+
+- The learning schema is `profiles`, `courses`, study packs, and sources. A study pack may exist
+  without a course; a source always belongs to one study pack.
+- Access through `createLearningRepositories()` in `src/server/db` with a request-scoped
+  `createSupabaseServerClient()`. Never pass a user ID to repository methods; `user_id` is filled by
+  `auth.uid()` and enforced by RLS.
+- Presentation components must not import Supabase clients or repository implementation. Features
+  and routes compose server use cases/actions; map repository errors to safe UI messages.
+- Keep ownership and system fields (`id`, `user_id`, timestamps) out of client-editable column
+  grants. Do not "fix" a denial by widening grants or disabling RLS.
+- Same-owner relationships are enforced by composite foreign keys as well as RLS. Do not replace
+  them with client-side checks or an application-only invariant.
+- Profile rows are provisioned by the `auth.users` trigger, with a minimal backfill. Do not make
+  signup depend on the app inserting a profile, and do not require a service-role client.
+- Store source provenance fields and processing state only. Extraction, chunking, embeddings,
+  retrieval, and generated learning content remain future tasks.
+- Every schema change needs a migration plus RLS/privilege review and pgTAP coverage. Apply it
+  through the reviewed CLI flow; do not make ad hoc DDL changes in the dashboard.
+- A migration is not verified just because it applies. Cross-user isolation, anonymous denial,
+  ownership immutability, association rejection, CRUD, and cascade behavior must be tested against a
+  real Postgres/Supabase instance.
+
 ### Server, AI, and data
 
 - AI access goes through `AiProvider` (`src/server/ai/provider.ts`). Adapters may import vendor SDKs;
@@ -214,9 +258,12 @@ document it and enforce it in review. Do not weaken a rule to make an import com
 - Persist source provenance (page, timestamp, URL) with extracted segments so citations survive
   retrieval.
 - Keep the service-role Supabase key server-only. Prefer the publishable/anon key plus RLS for
-  user-scoped queries.
-- Enable RLS on every user-owned table before exposing it. Migrations live in `supabase/migrations/`
-  when approved.
+  user-scoped queries. Task 003 does not use a service-role client.
+- Every user-owned table has RLS enabled and explicit per-operation policies for `authenticated`;
+  `anon` has no table privileges or policies. Grants are column-scoped so clients cannot set
+  ownership or system fields.
+- Migrations live in `supabase/migrations/` and are applied through the reviewed CLI flow. Back up
+  first; never use a destructive reset against a hosted project.
 - Do not log prompts, source text, auth tokens, or user content by default. Redact secrets and
   personal data.
 - Add timeouts/cancellation and bounded retries to external calls. Fail visibly rather than silently
@@ -231,16 +278,25 @@ document it and enforce it in review. Do not weaken a rule to make an import com
   viewports (320 px and up).
 - Test failure paths where the product can fail: empty sources, invalid input, provider errors,
   insufficient permissions.
+- Database behavior belongs in `supabase/tests/*.test.sql` (pgTAP). Cover cross-user reads and
+  mutations, anonymous denial, ownership immutability, cross-user association rejection, valid CRUD,
+  and FK/cascade behavior. Mocked repository tests are not proof of RLS.
+- Run `npx supabase test db` against a disposable/local database. If Docker, credentials, or the CLI
+  are unavailable, record that the live database paths remain unverified; do not substitute mocks
+  for database proof.
 - Do not mock the thing under test. Mock network boundaries with realistic fixtures. Automated tests
   must not create real users or send real confirmation/recovery email; verify those paths manually
   with a designated test account and record what remains unverified.
-- No coverage threshold exists yet. When domain logic lands, add thresholds and enforce them in CI.
+- No coverage threshold exists yet and CI is deferred. Add thresholds with the CI task; do not claim
+  coverage is enforced.
 - A test that only renders a component without asserting meaningful behavior is not sufficient
   coverage for a new feature.
 
 ### Documentation and git
 
 - Update `README.md` when setup, commands, stack, or architecture changes.
+- Update `src/server/db/README.md` when the schema, policies, repository boundary, or migration
+  workflow changes.
 - Update this file when a boundary or convention changes.
 - Keep `.env.example` in sync with every new variable; never add real values.
 - Use focused commits with conventional prefixes (`feat:`, `fix:`, `chore:`, `docs:`, `test:`,
@@ -256,6 +312,8 @@ A change is complete only when:
 - [ ] `npm run format:check`, `npm run lint`, `npm run typecheck`, and `npm run test` pass.
 - [ ] `npm run build` passes for route, layout, or server changes.
 - [ ] `npm run test:e2e` passes for user-facing flows (or the reason it cannot run is recorded).
+- [ ] Database changes include a reviewed migration and pgTAP coverage; RLS is verified against a
+      disposable/local Postgres, or the unverified live path is stated explicitly.
 - [ ] New behavior has tests, including at least one failure/edge case.
 - [ ] Accessibility basics are verified: keyboard path, labels, focus, contrast, reduced motion.
 - [ ] README/AGENTS/.env.example are updated if the change affects them.
@@ -263,8 +321,8 @@ A change is complete only when:
 
 ## Roadmap (requires approval)
 
-1. **Task 003:** Profiles and the initial learning schema with RLS, repository contracts, and
-   integration tests against a disposable Supabase instance.
+1. **Task 003 (implemented, pending review):** Profiles and the initial learning schema with RLS,
+   repository contracts, and integration tests.
 2. **Task 004:** AI provider adapter behind `AiProvider`, deterministic test double, usage/cost
    boundaries.
 3. **Task 005:** Document ingestion with source locators, chunking, and embeddings.

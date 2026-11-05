@@ -16,7 +16,7 @@ const layers = [
   {
     label: "Server",
     path: "src/server",
-    description: "AI, document processing, and database contracts.",
+    description: "AI contracts, document processing, and learning data access.",
     icon: Database,
   },
   {

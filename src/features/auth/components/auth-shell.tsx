@@ -82,7 +82,8 @@ function AuthShell({ eyebrow, title, description, children, footer, className }:
             ))}
           </ol>
           <p className="mt-6 border-t border-border pt-4 text-[0.6875rem] leading-relaxed text-ink-muted/60">
-            These learning features are not built yet. Task 002 covers accounts and sessions only.
+            These learning features are not built yet. Task 003 covers accounts, sessions, and the
+            learning database foundation.
           </p>
         </div>
       </aside>

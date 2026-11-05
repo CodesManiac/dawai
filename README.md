@@ -4,10 +4,13 @@ Dawai is an AI-powered learning companion for documents, webpages, and education
 product direction is source-grounded explanation, audio lessons, interactive tutoring, quizzes, and
 personalized feedback.
 
-> **Current state: Task 002 — Authentication foundation.** Email/password accounts, server-validated
-> sessions, a protected dashboard, email confirmation, password recovery/reset, and authenticated
-> password change are implemented with Supabase Auth. Learning features, application tables/migrations,
-> live AI calls, uploads, retrieval, quizzes, and TTS are intentionally not implemented.
+> **Current state: Task 003 — Learning database foundation.** Task 002 authentication remains
+> implemented: email/password accounts, server-validated sessions, a protected dashboard, email
+> confirmation, password recovery/reset, and authenticated password change with Supabase Auth.
+> Task 003 adds the first application schema (`profiles`, `courses`, study packs, and sources),
+> database-enforced ownership and RLS, profile provisioning, typed repositories, and pgTAP
+> integration tests. Learning UI, source processing, live AI calls, uploads, retrieval, quizzes, and
+> TTS are intentionally not implemented.
 
 ## What is in place
 
@@ -22,6 +25,15 @@ personalized feedback.
   are rejected.
 - Auth screens built from the Dawai design system with visible labels, keyboard-operable password
   visibility, focus styles, live error/success regions, and no horizontal overflow at 320 px.
+- Versioned Supabase migrations for `profiles`, `courses`, `study_packs`, and `sources`.
+- RLS on every learning table, deny-by-default anonymous access, column-level grants for
+  user-editable fields, and same-owner composite foreign keys.
+- A signup trigger that provisions a minimal profile without app-side registration logic or a
+  service-role key, plus a backfill for existing auth users.
+- Typed repository contracts and Supabase-backed implementations in `src/server/db` with zod
+  validation and safe database-error mapping.
+- A pgTAP database suite covering cross-user isolation, anonymous denial, ownership immutability,
+  association rejection, valid CRUD, and cascade behavior.
 - A Next.js 16 App Router shell with strict TypeScript and route groups.
 - A dark-first design system with semantic tokens, Montserrat UI type, and Source Serif 4 for
   learning content.
@@ -38,6 +50,11 @@ personalized feedback.
   24.15+.
 - **npm 11+** (the repository ships a `package-lock.json`; npm 12 was used for verification).
 - A Supabase project with email authentication enabled for the auth flows.
+- **Supabase CLI 3.x** for applying reviewed migrations and running pgTAP tests. It is invoked with
+  `npx` and is not a committed npm dependency.
+- **Docker** for `npx supabase start` and local database tests. Applying migrations to the linked
+  hosted project does not require a local Docker stack, but it does require an authenticated CLI and
+  database access.
 - Network access on the first build so `next/font` can fetch and self-host the font files.
 
 ## Getting started
@@ -58,6 +75,41 @@ Open [http://localhost:3000](http://localhost:3000). The auth entry points are `
 
 Without Supabase variables the public site still renders, but auth pages show a configuration
 notice instead of forms. No credential is logged or rendered.
+
+### Apply the learning migrations
+
+Task 003 ships migrations; it does **not** apply them to a hosted project automatically. Review
+`supabase/migrations/` and `supabase/README.md` first. To apply them to the approved Dawai project:
+
+```bash
+npx supabase login
+npx supabase projects list
+npx supabase link --project-ref <dawai-project-ref>
+npx supabase migration list --remote
+npx supabase db push --remote --dry-run
+# Review the dry run and obtain explicit approval before pushing.
+npx supabase db push --remote
+```
+
+`npx supabase projects list` must show the existing Dawai project; `link` may prompt for the
+database password locally. Do not pass passwords on the command line or paste tokens into chat.
+Before pushing, inspect the remote migration history, confirm PostgreSQL 15+, and verify a Dashboard
+backup or PITR recovery window. `--dry-run` prints the migrations that would be applied. Use the
+existing Dawai project, not a different Supabase project, and do not run a destructive reset against
+it. Migrations require explicit approval and database credentials; the app itself uses only the
+publishable key. Full preflight and live RLS steps are in `supabase/README.md`.
+
+For a disposable local database (requires Docker):
+
+```bash
+npx supabase start
+npx supabase db reset
+npx supabase test db supabase/tests/learning_database.test.sql
+```
+
+`db reset` is local-only in these instructions. The pgTAP suite creates disposable users, exercises
+RLS as `authenticated` and `anon`, and rolls back. Database proof is not implied by mocked repository
+tests.
 
 ### Supabase dashboard setup
 
@@ -82,22 +134,24 @@ started the flow, because the code verifier lives in that browser's cookies.
 
 ## Commands
 
-| Command                 | Purpose                                                      |
-| ----------------------- | ------------------------------------------------------------ |
-| `npm run dev`           | Start the development server (Turbopack).                    |
-| `npm run build`         | Create a production build.                                   |
-| `npm run start`         | Serve the production build.                                  |
-| `npm run lint`          | Run ESLint across the repository.                            |
-| `npm run lint:fix`      | Apply ESLint fixes.                                          |
-| `npm run format`        | Format with Prettier, including Tailwind class sorting.      |
-| `npm run format:check`  | Verify formatting without writing.                           |
-| `npm run typecheck`     | Run `tsc --noEmit`.                                          |
-| `npm run test`          | Run Vitest once.                                             |
-| `npm run test:watch`    | Run Vitest in watch mode.                                    |
-| `npm run test:coverage` | Run Vitest with V8 coverage.                                 |
-| `npm run test:e2e`      | Run Playwright; starts the dev server automatically.         |
-| `npm run test:e2e:ui`   | Open Playwright's UI mode.                                   |
-| `npm run check`         | Format check + lint + typecheck + unit tests (no build/e2e). |
+| Command                         | Purpose                                                      |
+| ------------------------------- | ------------------------------------------------------------ |
+| `npm run dev`                   | Start the development server (Turbopack).                    |
+| `npm run build`                 | Create a production build.                                   |
+| `npm run start`                 | Serve the production build.                                  |
+| `npm run lint`                  | Run ESLint across the repository.                            |
+| `npm run lint:fix`              | Apply ESLint fixes.                                          |
+| `npm run format`                | Format with Prettier, including Tailwind class sorting.      |
+| `npm run format:check`          | Verify formatting without writing.                           |
+| `npm run typecheck`             | Run `tsc --noEmit`.                                          |
+| `npm run test`                  | Run Vitest once.                                             |
+| `npm run test:watch`            | Run Vitest in watch mode.                                    |
+| `npm run test:coverage`         | Run Vitest with V8 coverage.                                 |
+| `npm run test:e2e`              | Run Playwright; starts the dev server automatically.         |
+| `npm run test:e2e:ui`           | Open Playwright's UI mode.                                   |
+| `npm run check`                 | Format check + lint + typecheck + unit tests (no build/e2e). |
+| `npx supabase db push --remote` | Apply reviewed migrations to the linked project.             |
+| `npx supabase test db`          | Run pgTAP tests against local Supabase.                      |
 
 Before opening a pull request, run `npm run check` and `npm run build`. Run `npm run test:e2e` for
 changes that affect routes, layout, auth, or interactive UI.
@@ -119,9 +173,9 @@ pins are intentional:
 | Components | `class-variance-authority`    | 0.7.1         | Variant API.                                                               |
 | Components | `clsx`, `tailwind-merge`      | 2.1.1 / 3.7.0 | `cn()` class merging.                                                      |
 | Icons      | `lucide-react`                | 1.66.0        | Icon set used by the design system.                                        |
-| Auth       | `@supabase/supabase-js`       | 2.118.0       | Auth client.                                                               |
+| Auth       | `@supabase/supabase-js`       | 2.118.0       | Auth and data client.                                                      |
 | Auth       | `@supabase/ssr`               | 0.12.7        | Cookie-based server/browser clients.                                       |
-| Validation | `zod`                         | 4.6.7         | Auth input and field-level errors.                                         |
+| Validation | `zod`                         | 4.6.7         | Auth and learning input validation.                                        |
 | Server     | `server-only`                 | 0.0.1         | Build-time guard for server modules.                                       |
 | Linting    | `eslint`                      | 9.39.5        | Official create-next-app 16 uses `^9`; plugin peers do not all declare 10. |
 | Linting    | `eslint-config-next`          | 16.4.3        | `core-web-vitals` + TypeScript flat configs.                               |
@@ -143,8 +197,8 @@ integration for them and unused runtime dependencies would be dead weight:
 | Retrieval      | `pgvector`      | Postgres extension, not an npm package |
 
 The AI boundary currently uses framework-neutral contracts in `src/server/ai/provider.ts`. A future
-adapter can wrap the Vercel AI SDK without changing feature code. Database tables, migrations, and
-`pgvector` remain deferred until the next approved task.
+adapter can wrap the Vercel AI SDK without changing feature code. The Task 003 learning schema is
+implemented; `pgvector`, embeddings, retrieval, and adjacent AI dependencies remain deferred.
 
 ### Why not TypeScript 7 or ESLint 10?
 
@@ -182,11 +236,16 @@ keeps linting and type-aware tooling reliable.
 │   │   └── supabase/             # Public config validation
 │   ├── server/                   # Server-only capabilities and contracts
 │   │   ├── ai/                   # Provider interface (no implementation yet)
-│   │   ├── db/                   # Database rules (no client/schema yet)
+│   │   ├── db/                   # Contracts, validation, Supabase repositories
 │   │   ├── documents/            # Source/citation contracts (no pipeline yet)
 │   │   └── supabase/             # Request-scoped server + proxy clients
 │   ├── proxy.ts                  # Session refresh + coarse route protection
 │   └── test/                     # Vitest setup
+├── supabase/
+│   ├── config.toml               # Local CLI configuration (no secrets)
+│   ├── migrations/               # Versioned schema, RLS, and provisioning SQL
+│   ├── seed.sql                  # Empty Task 003 seed
+│   └── tests/                    # pgTAP behavior and isolation tests
 ├── AGENTS.md                     # Architecture rules and implementation conventions
 ├── components.json               # shadcn/ui CLI-compatible configuration
 ├── playwright.config.ts
@@ -261,19 +320,48 @@ Security properties:
 - The browser Supabase client factory exists for future client-side reads/realtime. Auth writes go
   through Server Actions.
 
-### Data and migrations
+### Learning database architecture
 
-Task 002 adds **no application tables, migrations, or RLS policies**. Supabase Auth owns the user
-record; the dashboard reads `user.email`, `user.created_at`, and the optional `full_name` stored in
-`user.user_metadata`.
+Task 003 adds four application tables. Supabase Auth remains the identity source.
 
-When application data is approved:
+| Table         | Purpose                              | Relationship rules                                                                  |
+| ------------- | ------------------------------------ | ----------------------------------------------------------------------------------- |
+| `profiles`    | Display name and preferences         | One row per `auth.users` row; no password, email, or role duplication.              |
+| `courses`     | Optional study-pack containers       | Owned by `user_id`; course code is unique per user when present, case-insensitive.  |
+| `study_packs` | A learning unit                      | Owned by `user_id`; `course_id` is optional and must belong to the same user.       |
+| `sources`     | Document/text/web/video source state | Owned by `user_id`; always belongs to a same-user pack via a composite foreign key. |
 
-- Put SQL migrations in `supabase/migrations/` and review them like code.
-- Enable RLS on every user-owned table before exposing it.
-- Prefer the publishable/anon key plus RLS for user-scoped queries.
-- Keep any service-role use server-only and restricted to narrow trusted operations.
-- Add integration tests against a disposable Supabase instance before claiming queries work.
+- UUID primary keys are generated by Postgres. `user_id` defaults to `auth.uid()`; no repository
+  method accepts a user ID from the caller. `created_at` and `updated_at` are server-managed.
+- A study pack can exist without a course. Deleting a course detaches its packs; deleting a pack
+  cascades its sources; deleting the auth user cascades every owned row.
+- Source types are `document`, `text`, `webpage`, and `video`. Database checks require the matching
+  locator (`storage_path`, `text_content`, or `source_url`) and require a locator before a source can
+  be `ready`. Source processing is not implemented.
+- RLS is enabled on all four tables. Anonymous callers have no table grants or policies. Authenticated
+  users get explicit per-operation policies scoped to their own rows.
+- Table-level writes are revoked and column grants allow only user-editable fields. Ownership and
+  timestamp columns cannot be written by authenticated callers; RLS also checks ownership on update.
+- A database trigger on `auth.users` inserts a minimal profile after signup. The migration backfills
+  existing users and uses `on conflict do nothing` for idempotence. No service-role client or
+  app-side registration insert is required.
+- `createLearningRepositories()` in `src/server/db` provides typed `profiles`, `courses`,
+  `studyPacks`, and `sources` repositories. It accepts a request-scoped client, validates inputs with
+  zod, maps rows to domain objects, and converts database errors into safe `RepositoryError` codes.
+  Presentation components never import Supabase clients.
+- The SQL migrations are the schema source of truth. See `supabase/README.md` for the reviewed
+  `db push` flow and `src/server/db/README.md` for the boundary rules. Do not reset a hosted project.
+- `supabase/tests/learning_database.test.sql` is the 40-assertion pgTAP suite for anonymous denial,
+  cross-user reads and mutations, ownership immutability, association rejection, valid CRUD, and
+  cascades.
+
+Current database status: the three Task 003 migrations are applied to the hosted Dawai project. A
+read-only schema review plus a two-user live pass against the hosted Auth/PostgREST path verified
+profile provisioning, owner CRUD, anonymous denial, cross-user isolation in both directions,
+ownership and association rejection, course detachment, pack/source cascades, and auth-user cascade
+cleanup. The official pgTAP command still could not run because Docker/local Postgres is unavailable;
+the 40-assertion suite passed in a disposable in-process PostgreSQL 17 harness. No service-role
+client or privileged role was used as RLS evidence.
 
 ## Architecture boundaries
 
@@ -295,8 +383,9 @@ src/app (routes) ──► src/features (use cases) ──► src/server (ai · 
 - ESLint enforces the import directions that are enforceable today. See `AGENTS.md` for the full
   rules and the definition of done.
 
-The AI and document modules contain **contracts only**. No provider is called, no file is parsed,
-and no application table exists.
+The AI and document modules contain **contracts only**. No provider is called and no file is parsed.
+The learning schema and repositories exist, but source ingestion, embeddings, retrieval, and
+generated learning content do not.
 
 ## Design system
 
@@ -331,12 +420,12 @@ and current accessibility gaps: `/design-system`.
 
 ## Environment variables
 
-| Variable                               | Scope       | Status in Task 002                                                   |
-| -------------------------------------- | ----------- | -------------------------------------------------------------------- |
-| `NEXT_PUBLIC_APP_URL`                  | Public      | Read; defaults to `http://localhost:3000`. Set in production.        |
-| `NEXT_PUBLIC_SUPABASE_URL`             | Public      | Required for auth. Validated as an absolute http(s) URL.             |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public      | Required for auth. Publishable or legacy anon key; secrets rejected. |
-| `AI_GATEWAY_API_KEY`                   | Server only | Reserved for a future AI task. Not read in Task 002. Never expose.   |
+| Variable                               | Scope       | Status in Task 003                                                        |
+| -------------------------------------- | ----------- | ------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_APP_URL`                  | Public      | Read; defaults to `http://localhost:3000`. Set in production.             |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Public      | Required for auth and learning data. Validated as an absolute URL.        |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public      | Required for auth/data. Publishable or legacy anon key; secrets rejected. |
+| `AI_GATEWAY_API_KEY`                   | Server only | Reserved for a future AI task. Not read in Task 003. Never expose.        |
 
 Copy `.env.example` to `.env.local` and keep real credentials out of git. Do not add a secret to a
 `NEXT_PUBLIC_*` variable. A malformed or missing Supabase configuration produces an actionable
@@ -349,15 +438,24 @@ after changing them.
 npm run test          # Vitest + Testing Library (jsdom)
 npm run test:coverage # V8 coverage; report in ./coverage
 npm run test:e2e      # Playwright; starts the dev server
+npx supabase test db supabase/tests/learning_database.test.sql  # pgTAP, needs local Supabase
 ```
 
-Auth E2E tests call the configured Supabase project for invalid-credential and invalid-link paths. Run
-them with `.env.local` populated; they do not create users or send email.
+Auth E2E tests call the configured Supabase project for invalid-credential, invalid-link, and reset
+form paths. The recovery test submits a reset request for a non-deliverable `example.invalid`
+address, so run the suite only with approval or exclude that test. No test account is created by the
+E2E suite.
+
+The repository tests in `src/server/db/*.test.ts` verify validation, mapping, query construction, and
+safe error handling against a fake client. They deliberately do **not** prove RLS. Database behavior
+is covered by the pgTAP suite, which creates disposable auth users, switches to `anon`/`authenticated`,
+and rolls back. The official pgTAP command has not been run against the hosted Dawai project; hosted
+RLS was verified separately with dedicated users through Auth/PostgREST.
 
 Coverage is collected but **no thresholds are enforced yet**. On 2 November 2026, `npm run test`
-passed **133 tests across 18 files** and coverage reported **83.5% statements / 81.48% branches /
-69.89% functions / 83.79% lines**. Playwright passed **16 tests** in one Chromium project against
-`http://localhost:3000`.
+passed **160 tests across 21 files** and coverage reported **76.48% statements / 72.89% branches /
+72.46% functions / 76.54% lines**. On 3 November 2026, `npm run test:e2e` passed all **16 tests** in
+one cached Chromium project against `http://localhost:3000`.
 
 The E2E suite covers:
 
@@ -390,6 +488,16 @@ Remaining unverified live paths: access-token refresh after JWT expiry (session 
 verified and the refresh path is unit-tested), sign-out during a Supabase outage, PKCE links opened
 in a different browser, and global reset revocation across a second pre-existing session. The E2E
 suite's failure paths reach the configured Supabase project; its success paths use mocks.
+
+Database-specific status: the three migrations are applied to hosted Dawai, and a read-only schema
+review confirmed tables, constraints, indexes, RLS, policies, grants, triggers, and functions. On
+5 November 2026, a two-user live pass passed **68/68** checks against Auth/PostgREST: profile
+provisioning, owner CRUD, anonymous denial, cross-user isolation in both directions, ownership and
+association rejection, course detachment, and pack/source cascades. After the test auth users were
+deleted through the Dashboard, cleanup checks returned zero test users, profiles, and orphan rows.
+The official pgTAP command was not available because Docker/local Postgres was unavailable; the
+40-assertion suite passed in a disposable in-process PostgreSQL 17 harness. No service-role client or
+privileged role was used as RLS evidence.
 
 ### Manual live verification (requires approval)
 
@@ -446,8 +554,13 @@ builds and starts the production server when `CI` is set.
   known; auth tokens live in cookies readable by the Supabase browser client, so XSS protection is
   important.
 - `poweredByHeader` is disabled.
-- Authentication is implemented, but authorization beyond “is this user signed in?” is not. There
-  are no application tables, roles, or per-resource permissions yet.
+- Authentication and per-user learning-data authorization are implemented. RLS scopes rows to the
+  authenticated owner, but there are no roles, teams, sharing, collaboration, or administrative
+  permissions yet.
+- The app does not use a service-role key. Learning queries use the publishable key plus the user's
+  session, and ownership is derived from `auth.uid()`.
+- The learning schema is not exposed to anonymous callers. RLS policies and column grants are part of
+  the migration review; changing either requires database tests.
 - Rate limiting is currently delegated to Supabase Auth. There is no application-level rate limiter
   or bot protection in front of the auth forms.
 - PKCE email links are browser-bound. Opening a confirmation or recovery link in a different browser
@@ -460,14 +573,16 @@ builds and starts the production server when `CI` is set.
 
 ## Scope and next steps
 
-Intentionally **not** implemented in Task 002: application tables/migrations, profiles, study packs,
-document ingestion, RAG/pgvector, live AI providers, quizzes, TTS, analytics, billing, and CI
-workflows.
+Intentionally **not** implemented in Task 003: study-pack/product CRUD screens, document ingestion,
+source parsing/chunking, RAG/pgvector, live AI providers, quizzes, TTS, analytics, billing, and CI
+workflows. The schema stores source/provenance state only; it does not process sources or generate
+learning content.
 
-Task 003 should start only after approval. Recommended order:
+Task 003 is implemented and awaits review. Task 004 should start only after approval. Recommended
+order:
 
-1. **Task 003:** Profiles and the initial learning schema with RLS, repository contracts, and
-   integration tests against a disposable Supabase instance.
+1. **Task 003 (implemented, pending review):** Profiles and the initial learning schema with RLS,
+   repository contracts, and integration tests.
 2. **Task 004:** AI provider adapter behind `AiProvider` with a deterministic test double and
    usage/cost boundaries.
 3. **Task 005:** Document ingestion with citation locators, then retrieval, grounded tutoring, and

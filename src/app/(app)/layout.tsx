@@ -21,7 +21,7 @@ export default async function AppLayout({ children }: Readonly<{ children: React
           <div className="flex items-center gap-3">
             <DawaiLogo href="/dashboard" />
             <Badge variant="outline" className="hidden sm:inline-flex">
-              Task 002
+              Task 003
             </Badge>
           </div>
 
@@ -45,7 +45,8 @@ export default async function AppLayout({ children }: Readonly<{ children: React
 
       <footer className="border-t border-border px-4 py-5">
         <p className="mx-auto max-w-6xl text-center text-[0.6875rem] leading-relaxed text-ink-muted/60">
-          Dawai · Task 002 authentication foundation. Learning features are not built yet.
+          Dawai · Task 003 learning database foundation. Learning workspace features are not built
+          yet.
         </p>
       </footer>
     </div>
