@@ -41,6 +41,8 @@ const principles = [
 
 const ready = [
   "Email/password auth with server-validated sessions",
+  "Profiles, courses, study packs, and sources with RLS",
+  "Typed learning repositories and pgTAP isolation tests",
   "Next.js App Router shell with strict TypeScript",
   "Semantic design tokens and accessible UI primitives",
   "Montserrat UI with Source Serif 4 for learning content",
@@ -50,9 +52,9 @@ const ready = [
 ] as const;
 
 const deferred = [
-  "Study packs and the learning database schema",
+  "Study pack and source UI with retrieval and citations",
   "AI provider adapter and live model calls",
-  "Document upload, parsing, embeddings, and retrieval",
+  "Document parsing, chunking, embeddings, and pgvector",
   "Audio lessons, quizzes, tutoring, and TTS",
 ] as const;
 
@@ -73,7 +75,7 @@ export default function HomePage() {
           <div>
             <Badge variant="outline" className="border-progress/40 bg-progress/10">
               <span className="size-1.5 rounded-full bg-progress" aria-hidden="true" />
-              Auth foundation · Task 002
+              Learning database · Task 003
             </Badge>
 
             <h1 className="mt-6 max-w-2xl text-4xl leading-[1.02] font-extrabold tracking-[-0.045em] text-balance sm:text-5xl lg:text-6xl">
@@ -148,7 +150,8 @@ export default function HomePage() {
           </div>
 
           <p className="mt-5 text-xs text-ink-muted/70">
-            Accounts and sessions are implemented. The learning features above remain planned.
+            Accounts, sessions, and the learning database foundation are implemented. The learning
+            workspace above remains planned.
           </p>
         </div>
       </section>
@@ -185,7 +188,8 @@ export default function HomePage() {
             </ul>
 
             <p className="mt-8 text-xs leading-relaxed text-ink-muted/70">
-              Auth is implemented. The AI and document modules are still contracts only.
+              Auth and the learning database are implemented. The AI and document modules are still
+              contracts only.
             </p>
           </div>
 
@@ -197,14 +201,15 @@ export default function HomePage() {
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
             <p className="text-[0.6875rem] font-bold tracking-[0.16em] text-progress uppercase">
-              Task 002 status
+              Task 003 status
             </p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">
-              Authentication is in place. The product isn&rsquo;t.
+              The foundation is in place. The workspace isn&rsquo;t.
             </h2>
             <p className="mt-4 text-base leading-relaxed text-ink-muted">
               You can create an account, sign in, recover a password, and hold a server-validated
-              session. Study packs, sources, AI, and audio are deliberately absent.
+              session. Profiles, courses, study packs, and source records are protected by RLS. A
+              learning UI, ingestion, AI, and audio are deliberately absent.
             </p>
           </div>
 
@@ -254,11 +259,11 @@ export default function HomePage() {
                   Review first
                 </p>
                 <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.03em]">
-                  Task 003 starts only after approval.
+                  Task 003 is implemented and awaiting review.
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted">
-                  Authentication is reviewable now. Study packs, ingestion, and AI remain out of
-                  scope until the next task is approved.
+                  The learning database foundation is reviewable now. Learning UI, ingestion, AI,
+                  and audio remain out of scope until the next tasks are approved.
                 </p>
               </div>
               <Button asChild variant="secondary" className="shrink-0">

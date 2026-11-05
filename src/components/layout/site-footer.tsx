@@ -14,10 +14,11 @@ function SiteFooter() {
 
         <div className="flex flex-col gap-3 md:items-end md:text-right">
           <p className="text-[0.6875rem] font-bold tracking-[0.16em] text-ink-muted/70 uppercase">
-            Auth foundation · Task 002
+            Learning database · Task 003
           </p>
           <p className="max-w-xs text-xs leading-relaxed text-ink-muted/80">
-            Accounts are real. Learning features remain intentionally deferred to later tasks.
+            Accounts and the learning schema are real. Learning UI and AI remain intentionally
+            deferred to later tasks.
           </p>
           <nav aria-label="Footer" className="flex items-center gap-4">
             {siteConfig.nav.map((item) => (

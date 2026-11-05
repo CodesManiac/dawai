@@ -27,7 +27,7 @@ function SiteHeader() {
           </nav>
 
           <Badge variant="outline" className="hidden md:inline-flex">
-            Auth · Task 002
+            Learning DB · Task 003
           </Badge>
         </div>
       </div>

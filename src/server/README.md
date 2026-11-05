@@ -3,12 +3,12 @@
 Cross-feature, server-only code lives here. Nothing in this directory may import
 React, `src/app`, `src/components`, or `src/features`.
 
-| Folder       | Responsibility                                            | Task 002 state       |
-| ------------ | --------------------------------------------------------- | -------------------- |
-| `ai/`        | Model-agnostic provider contracts and future adapters     | Contract only        |
-| `documents/` | Extraction, chunking, citation locators, future pipelines | Contract only        |
-| `db/`        | Repository interfaces and future application schema       | Documentation only   |
-| `supabase/`  | Cookie-bound Supabase clients and proxy session refresh   | Implemented for auth |
+| Folder       | Responsibility                                            | Task 003 state                |
+| ------------ | --------------------------------------------------------- | ----------------------------- |
+| `ai/`        | Model-agnostic provider contracts and future adapters     | Contract only                 |
+| `documents/` | Extraction, chunking, citation locators, future pipelines | Contract only                 |
+| `db/`        | Repository contracts, validation, learning data access    | Implemented for learning data |
+| `supabase/`  | Cookie-bound Supabase clients and proxy session refresh   | Implemented for auth and data |
 
 ## Rules
 
@@ -31,5 +31,6 @@ resulting cookies onto the response. Protected layouts still validate the user
 with `getCurrentUser()` / `requireUser()`; the proxy is not the authorization
 boundary.
 
-Application tables, migrations, RLS policies, document upload, retrieval, and
-live AI calls are explicitly deferred. Task 002 uses Supabase Auth only.
+Task 003 implements the `profiles`, `courses`, `study_packs`, and `sources` schema with RLS,
+column-scoped grants, same-owner foreign keys, and repositories in `db/`. Document upload, source
+processing, retrieval, embeddings, and live AI calls remain explicitly deferred.

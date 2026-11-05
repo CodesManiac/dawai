@@ -46,6 +46,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
+# supabase CLI state (generated, may contain project metadata)
+supabase/.temp/
+
 # local agent/tooling state
 .idea/
 .vscode/*

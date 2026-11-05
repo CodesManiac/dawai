@@ -5,7 +5,7 @@
  * this layer. Task 001 intentionally ships contracts only: no upload route, no
  * storage client, and no extraction dependencies.
  */
-export type SourceKind = "document" | "webpage" | "video";
+export type SourceKind = "document" | "text" | "webpage" | "video";
 
 /** Where a piece of extracted text came from, in the source's own coordinates. */
 export interface SourceLocator {

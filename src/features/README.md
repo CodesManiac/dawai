@@ -45,5 +45,14 @@ src/features/<feature>/
 - Auth must remain server-authoritative: resolve identity with Supabase, never
   with a user ID supplied by the client. Sanitize every post-login redirect.
 
-Task 003 adds profiles and the first learning schema only after approval. Do not
-add study packs or learning tables to this slice in advance.
+Task 003 adds the learning schema, RLS, and repositories under `src/server/db` and
+`supabase/migrations`; it does not add a study-pack feature or CRUD screens. When a learning feature
+is approved:
+
+- Call server use cases that use `createLearningRepositories()` with a request-scoped Supabase
+  client. Do not import Supabase clients into components.
+- Never accept a user ID from a form or client component. The database derives ownership from the
+  verified session.
+- Keep source-processing, retrieval, and AI behavior out of this slice until their own tasks.
+- Add repository/unit tests and database coverage for cross-user and failure paths before claiming a
+  flow works.
